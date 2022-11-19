@@ -47,6 +47,21 @@ module.exports = {
 				value: ' ',
 			},
 			{
+				type: 'textinput',
+				id: 'filter',
+				width: 6,
+				label: 'Label Filter',
+				tooltip: 'If the UMD label contains this text, remove it',
+				default: ' (FSFC)',
+			},
+			{
+				type: 'text',
+				id: 'dummy3',
+				width: 12,
+				label: ' ',
+				value: ' ',
+			},
+			{
 				type: 'checkbox',
 				id: 'verbose',
 				label: 'Enable Verbose Logging',

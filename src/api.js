@@ -120,7 +120,7 @@ function processTSL31Tally(tally) {
 		if (self.TALLIES[i].address == tally.address) {
 			self.TALLIES[i].tally1 = tally.tally1;
 			self.TALLIES[i].tally2 = tally.tally2;
-			self.TALLIES[i].label = tally.label.trim();
+			self.TALLIES[i].label = tally.label.trim().replace(self.config.filter, '');
 
 			found = true;
 			break;
@@ -132,7 +132,7 @@ function processTSL31Tally(tally) {
 		tallyObj.address = tally.address;
 		tallyObj.tally1 = tally.tally1;
 		tallyObj.tally2 = tally.tally2;
-		tallyObj.label = tally.label.trim();
+		tallyObj.label = tally.label.trim().replace(self.config.filter, '');
 
 		self.TALLIES.push(tallyObj);
 		self.TALLIES.sort((a, b) => a.address - b.address);
@@ -140,7 +140,7 @@ function processTSL31Tally(tally) {
 		self.CHOICES_TALLYADDRESSES.push(
 			{
 				id: tally.address,
-				label: tally.address + ' (' + tally.label.trim() + ')'
+				label: tally.address + ' (' + tally.label.trim().replace(self.config.filter, '') + ')'
 			}
 		);
 
