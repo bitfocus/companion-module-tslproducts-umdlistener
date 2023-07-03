@@ -1,30 +1,38 @@
 module.exports = {
-	updateVariableDefinitions() {
+	initVariables() {
+		let self = this;
+
 		let variables = [
-			{ label: 'Module State', name: 'module_state'},
+			{ name: 'Module State', variableId: 'module_state'},
 		]
 
-		for (let i = 0; i < this.TALLIES.length; i++) {
-			variables.push( { label: `Tally ${this.TALLIES[i].address} Label`, name: `tally_${this.TALLIES[i].address}_label`});
-			variables.push( { label: `Tally ${this.TALLIES[i].address} PVW`, name: `tally_${this.TALLIES[i].address}_pvw`});
-			variables.push( { label: `Tally ${this.TALLIES[i].address} PGM`, name: `tally_${this.TALLIES[i].address}_pgm`});
+		for (let i = 0; i < self.TALLIES.length; i++) {
+			variables.push( { name: `Tally ${self.TALLIES[i].address} Label`, variableId: `tally_${self.TALLIES[i].address}_label`});
+			variables.push( { name: `Tally ${self.TALLIES[i].address} PVW`, variableId: `tally_${self.TALLIES[i].address}_pvw`});
+			variables.push( { name: `Tally ${self.TALLIES[i].address} PGM`, variableId: `tally_${self.TALLIES[i].address}_pgm`});
 		}
 
-		this.setVariableDefinitions(variables);
+		self.setVariableDefinitions(variables);
 	},
 
 	checkVariables() {
+		let self = this;
+		
 		try {
-			for (let i = 0; i < this.TALLIES.length; i++) {
-				this.setVariable(`tally_${this.TALLIES[i].address}_label`, this.TALLIES[i].label);
-				this.setVariable(`tally_${this.TALLIES[i].address}_pvw`, (this.TALLIES[i].tally1 == 1 ? 'True' : 'False'));
-				this.setVariable(`tally_${this.TALLIES[i].address}_pgm`, (this.TALLIES[i].tally2 == 1 ? 'True' : 'False'));
+			let variableObj = {};
+
+			for (let i = 0; i < self.TALLIES.length; i++) {
+				variableObj[`tally_${self.TALLIES[i].address}_label`] = self.TALLIES[i].label;
+				variableObj[`tally_${self.TALLIES[i].address}_pvw`] = (self.TALLIES[i].tally1 == 1 ? 'True' : 'False');
+				variableObj[`tally_${self.TALLIES[i].address}_pgm`] = (self.TALLIES[i].tally2 == 1 ? 'True' : 'False');
 			}
+
+			self.setVariableValues(variableObj);
 		}
 		catch(error) {
 			//do something with that error
-			if (this.config.verbose) {
-				this.log('debug', 'Error Updating Variables: ' + error);
+			if (self.config.verbose) {
+				self.log('debug', 'Error Updating Variables: ' + error);
 			}
 		}
 	}

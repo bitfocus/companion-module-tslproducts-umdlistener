@@ -1,8 +1,10 @@
+const { Regex } = require('@companion-module/base')
+
 module.exports = {
-	config_fields() {
+	getConfigFields() {
 		return [
 			{
-				type: 'text',
+				type: 'static-text',
 				id: 'info',
 				width: 12,
 				label: 'Information',
@@ -40,7 +42,7 @@ module.exports = {
 				]
 			},
 			{
-				type: 'text',
+				type: 'static-text',
 				id: 'dummy2',
 				width: 12,
 				label: ' ',
@@ -55,7 +57,7 @@ module.exports = {
 				default: ' (FSFC)',
 			},
 			{
-				type: 'text',
+				type: 'static-text',
 				id: 'dummy3',
 				width: 12,
 				label: ' ',

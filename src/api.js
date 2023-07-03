@@ -1,6 +1,7 @@
-//includes for TSL protocol libraries
+const {InstanceStatus } = require('@companion-module/base');
+
 const TSLUMD 					= require('tsl-umd'); // TSL 3.1 UDP package
-const TSLUMDv5                  = require('tsl-umd-v5');
+//const TSLUMDv5                  = require('tsl-umd-v5');
 const net 						= require('net');
 const packet 					= require('packet');
 
@@ -51,7 +52,7 @@ module.exports = {
 			}
 			catch(error) {
 				self.log('error', 'Error occurred closing Tally listener port: ' + error.toString());
-				self.setVariable('module_state', 'Error - See Log.');
+				self.setVariableValues({'module_state': 'Error - See Log.'});
 			}
 		}
 	}
@@ -103,7 +104,7 @@ function setupTSL31(self, port, portType) {
 	}
 	catch(error) {
 		self.log('error', 'Error occurred setting up Tally Listener: ' + error.toString());
-		self.setVariable('module_state', 'Error - See Log.');
+		self.setVariableValues({'module_state': 'Error - See Log.'});
 	}
 }
 
@@ -146,12 +147,12 @@ function processTSL31Tally(tally) {
 
 		self.CHOICES_TALLYADDRESSES.sort((a, b) => a.id - b.id);
 
-		self.updateVariableDefinitions();
-		self.feedbacks();
+		self.initVariables();
+		self.initFeedbacks();
 	}
 
-	self.status(self.STATUS_OK);
-	self.setVariable('module_state', 'Tally Data Received.');
+	self.updateStatus(InstanceStatus.Ok);
+	self.setVariableValues({'module_state': 'Tally Data Received.'});
 
 	self.checkVariables();
 	self.checkFeedbacks();

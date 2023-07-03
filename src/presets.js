@@ -1,25 +1,26 @@
+const { combineRgb } = require('@companion-module/base');
+
 module.exports = {
-	presets() {
+	initPresets() {
 		let self = this;
 		
 		const presets = []
 
 		for (let i = 0; i < self.TALLIES.length; i++) {
 			presets.push({
+				type: 'button',
 				category: 'Tally State',
-				label: `${self.TALLIES[i].label} Tally State`,
-				bank: {
-					style: 'text',
+				name: `${self.TALLIES[i].label} Tally State`,
+				style: {
 					text: `$(tslumd-listener:tally_${self.TALLIES[i].address}_label)`,
 					size: '18',
 					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0)
+					bgcolor: combineRgb(0, 0, 0)
 				},
-				actions: [
-				],
+				steps: [],
 				feedbacks: [
 					{
-						type: 'tallyState',
+						feedbackId: 'tallyState',
 						options: {
 							address: self.TALLIES[i].address,
 							number: 'tally1',
@@ -31,7 +32,7 @@ module.exports = {
 						}
 					},
 					{
-						type: 'tallyState',
+						feedbackId: 'tallyState',
 						options: {
 							address: self.TALLIES[i].address,
 							number: 'tally2',
@@ -46,6 +47,6 @@ module.exports = {
 			});
 		}
 
-		this.setPresetDefinitions(presets)
+		self.setPresetDefinitions(presets);
 	},
 }

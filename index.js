@@ -1,17 +1,29 @@
-var InstanceSkel = require('../../instance_skel');
+// Sony-Bravia
 
-const configFields = require('./src/configFields');
-const api = require('./src/api');
+const { InstanceBase, InstanceStatus, runEntrypoint } = require('@companion-module/base');
+const UpgradeScripts = require('./src/upgrades');
+
+const config = require('./src/config');
 const actions = require('./src/actions');
-const variables = require('./src/variables');
 const feedbacks = require('./src/feedbacks');
+const variables = require('./src/variables');
 const presets = require('./src/presets');
 
-class TSLProductsUMDListenerInstance extends InstanceSkel {
-	constructor(system, id, config) {
-		super(system, id, config)
+const api = require('./src/api');
 
-		this.config = config
+class TSLProductsUMDListenerInstance extends InstanceBase {
+	constructor(internal) {
+		super(internal)
+
+		// Assign the methods from the listed files to this class
+		Object.assign(this, {
+			...config,
+			...actions,
+			...feedbacks,
+			...variables,
+			...presets,
+			...api
+		})
 
 		this.oldPortType = '';
 
@@ -20,26 +32,21 @@ class TSLProductsUMDListenerInstance extends InstanceSkel {
 		this.CHOICES_TALLYADDRESSES = [
 			{ id: -1, label: 'No tally data received yet...'}
 		]
-
-		// Assign the methods from the listed files to this class
-		Object.assign(this, {
-			...configFields,
-			...api,
-			...actions,
-			...variables,
-			...feedbacks,
-			...presets,			
-		})
 	}
 
-	init() {
-		this.status(this.STATUS_UNKNOWN);
+	async destroy() {
+		let self = this;
 
-		// Update the config
-		this.updateConfig();
+		self.closePort();
 	}
 
-	updateConfig(config) {
+	async init(config) {
+		this.configUpdated(config)
+	}
+
+	async configUpdated(config) {
+		this.config = config
+
 		if (config) {
 			this.oldPortType = this.config.porttype;
 			this.config = config
@@ -56,31 +63,20 @@ class TSLProductsUMDListenerInstance extends InstanceSkel {
 			this.openPort();
 
 			// Init the Actions
-			this.actions();
+			this.initActions();
+			this.initVariables();
+			this.initFeedbacks();
+			this.initPresets();
 
-			// Init and Update Variables
-			this.updateVariableDefinitions();
 			this.checkVariables();
-
-			// Init the Feedbacks
-			this.feedbacks();
-
-			// Init the Presets
-			this.presets();
+			this.checkFeedbacks();
 
 			// Set Status to Connecting
-			this.status(this.STATUS_CONNECTING)
+			this.updateStatus(InstanceStatus.Connecting)
 
-			this.setVariable('module_state', 'Waiting for Data...');
+			this.setVariableValues({'module_state': 'Waiting for Data...'});
 		}
-	}
-
-	destroy() {
-		//close out any TCP or UDP connections
-		this.closePort();
-
-		this.debug('destroy', this.id);
 	}
 }
 
-module.exports = TSLProductsUMDListenerInstance;
+runEntrypoint(TSLProductsUMDListenerInstance, UpgradeScripts);

@@ -1,9 +1,9 @@
 module.exports = {
 
-	actions() {
+	initActions() {
 		let self = this; // required to have reference to outer `this`
-		let actionsArr = {};
+		let actions = {};
 
-		this.setActions(actionsArr);
+		this.setActionDefinitions(actions);
 	},
 }
