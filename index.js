@@ -27,7 +27,7 @@ class TSLProductsUMDListenerInstance extends InstanceBase {
 
 		this.oldPortType = '';
 
-		this.SERVER = null;
+		this.SERVER = undefined;
 		this.TALLIES = [];
 		this.CHOICES_TALLYADDRESSES = [
 			{ id: -1, label: 'No tally data received yet...'}
@@ -52,7 +52,7 @@ class TSLProductsUMDListenerInstance extends InstanceBase {
 			this.config = config
 		}
 
-		if (this.SERVER) {
+		if (this.SERVER !== undefined) {
 			//close out any open ports and re-init
 			this.closePort();
 		}

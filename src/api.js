@@ -35,20 +35,22 @@ module.exports = {
 		let port = self.config.port;
 		let portType = self.oldPortType == '' ? self.config.porttype : self.oldPortType;
 
-		if (self.SERVER) {
+		if (self.SERVER !== undefined) {
 			try {
 				switch(portType) {
 					case 'udp':
 						self.log('info', `Closing TSL UMD UDP Port.`);
-						self.SERVER.server.close();
+						self.SERVER.close();
 						break;
 					case 'tcp':
 						self.log('info', `Closing TSL UMD TCP Port.`);
-						self.SERVER.close(function() {});
+						self.SERVER.server.close(function() {});
 						break;
 					default:
 						break;
 				}
+
+				self.SERVER = undefined;
 			}
 			catch(error) {
 				self.log('error', 'Error occurred closing Tally listener port: ' + error.toString());
