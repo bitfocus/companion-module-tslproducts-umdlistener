@@ -44,7 +44,9 @@ module.exports = {
 						break;
 					case 'tcp':
 						self.log('info', `Closing TSL UMD TCP Port.`);
-						self.SERVER.server.close(function() {});
+						if (self.SERVER.server !== undefined) {
+							self.SERVER.server.close(function() {});
+						}
 						break;
 					default:
 						break;
