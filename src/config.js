@@ -8,7 +8,8 @@ module.exports = {
 				id: 'info',
 				width: 12,
 				label: 'Information',
-				value: 'This module listens to incoming TSL UMD data at the TCP or UDP port specified and updates Feedbacks and Variables accordingly.'
+				value:
+					'This module listens to incoming TSL UMD data at the TCP or UDP port specified and updates Feedbacks and Variables accordingly.',
 			},
 			{
 				type: 'number',
@@ -16,7 +17,7 @@ module.exports = {
 				width: 6,
 				label: 'Listening Port',
 				default: '9800',
-				regex: this.REGEX_PORT
+				regex: this.REGEX_PORT,
 			},
 			{
 				type: 'dropdown',
@@ -27,7 +28,7 @@ module.exports = {
 				choices: [
 					{ id: 'tcp', label: 'TCP' },
 					{ id: 'udp', label: 'UDP' },
-				]
+				],
 			},
 			{
 				type: 'dropdown',
@@ -38,8 +39,8 @@ module.exports = {
 				choices: [
 					{ id: 'tsl3.1', label: 'TSL 3.1' },
 					//{ id: 'tsl4.0', label: 'TSL 4.0' },
-					//{ id: 'tsl5.0', label: 'TSL 5.0' }
-				]
+					{ id: 'tsl5.0', label: 'TSL 5.0' },
+				],
 			},
 			{
 				type: 'static-text',
@@ -67,8 +68,8 @@ module.exports = {
 				type: 'checkbox',
 				id: 'verbose',
 				label: 'Enable Verbose Logging',
-				default: false
-			}
+				default: false,
+			},
 		]
 	},
 }
