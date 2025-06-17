@@ -1,32 +1,27 @@
 const { InstanceStatus } = require('@companion-module/base')
 
-const TSLUMD = require('tsl-umd') // TSL 3.1 UDP package
-const TSLUMDv5 = require('tsl-umd-v5')
+const dgram = require('dgram')
 const net = require('net')
-const packet = require('packet')
 
 module.exports = {
 	openPort() {
-		let self = this // required to have reference to outer `this`
+		let self = this
 
-		const port = self.config.port
 		const portType = self.config.porttype
-		const protocol = self.config.protocol
 
-		switch (protocol) {
-			case 'tsl3.1':
-				setupTSL31(self, port, portType)
+		self.updateStatus(InstanceStatus.Connecting)
+
+		this.closePort()
+
+		switch (portType) {
+			case 'udp':
+				startUDP.call(self)
 				break
-			case 'tsl4.0':
-				break
-			case 'tsl5.0':
-				if (portType == 'udp') {
-					SetUpTSL5Server_UDP(self, port)
-				} else if (portType == 'tcp') {
-					SetUpTSL5Server_TCP(self, port)
-				}
+			case 'tcp':
+				startTCP.call(self)
 				break
 			default:
+				self.log('error', 'Invalid port type specified. Please choose either UDP or TCP.')
 				break
 		}
 
@@ -34,7 +29,7 @@ module.exports = {
 	},
 
 	closePort() {
-		let self = this // required to have reference to outer `this`
+		let self = this
 
 		let port = self.config.port
 		let portType = self.oldPortType == '' ? self.config.porttype : self.oldPortType
@@ -65,62 +60,96 @@ module.exports = {
 	},
 }
 
-function setupTSL31(self, port, portType) {
-	try {
-		if (portType == 'udp') {
-			self.SERVER = new TSLUMD(port)
-			self.log('info', `TSL 3.1 Server started. Listening for data on UDP Port: ${port}`)
-			self.SERVER.on('message', function (tally) {
-				processTSL31Tally.bind(self)(tally)
-			})
-		} else if (portType == 'tcp') {
-			let parser = packet.createParser()
-			parser.packet(
-				'tsl',
-				'b8{x1, b7 => address},b8{x2, b2 => brightness, b1 => tally4, b1 => tally3, b1 => tally2, b1 => tally1 }, b8[16] => label',
-			)
+function startUDP() {
+	let self = this
 
-			self.SERVER = net
-				.createServer(function (socket) {
-					socket.on('data', function (data) {
-						parser.extract('tsl', function (result) {
-							result.label = new Buffer.from(result.label).toString().trim()
-							processTSL31Tally.bind(self)(result)
-						})
-						parser.parse(data)
-					})
+	let port = self.config.port
 
-					socket.on('close', function () {
-						self.log('debug', `TSL 3.1 TCP Server connection closed.`)
-					})
-				})
-				.on('error', (err) => {
-					let error = err.toString()
+	self.log('info', `Creating UDP Connection on Port: ${port}`)
+	self.SERVER = dgram.createSocket('udp4')
+	self.SERVER.bind(port)
+	self.updateStatus(InstanceStatus.Ok)
 
-					Object.keys(err).forEach(function (key) {
-						if (key === 'code') {
-							if (err[key] === 'EADDRINUSE') {
-								error = 'This port (' + port + ') is already in use. Choose another port.'
-							}
-						}
-					})
+	self.SERVER.on('message', function (message, rinfo) {
+		self.log('debug', `Received data: ${message.toString('hex')}`)
 
-					self.log('error', error)
-				})
-				.listen(port, function () {
-					self.log('info', `TSL 3.1 Server started. Listening for data on TCP Port: ${port}`)
-				})
+		if (self.config.protocol == 'tsl3.1') {
+			parseTSL31Packet.bind(self)(message)
+		} else if (self.config.protocol == 'tsl5.0') {
+			parseTSL5Packet.bind(self)(message)
 		}
+	})
+}
+
+function startTCP() {
+	let self = this
+
+	let port = self.config.port
+
+	try {
+		self.log('info', `Creating TCP Connection on Port: ${port}`)
+		self.SERVER = net
+			.createServer(function (socket) {
+				socket.on('data', function (data) {
+					self.log('debug', `Received data: ${data.toString('hex')}`)
+
+					if (self.config.protocol == 'tsl3.1') {
+						parseTSL31Packet.bind(self)(data)
+					} else if (self.config.protocol == 'tsl5.0') {
+						parseTSL5Packet.bind(self)(data)
+					}
+				})
+
+				socket.on('close', function () {
+					self.log('debug', `TSL TCP Server connection closed.`)
+				})
+
+				self.log('debug', `TSL TCP Server connection opened.`)
+				self.updateStatus(InstanceStatus.Ok)
+			})
+			.listen(port, function () {
+				self.log('info', `TSL TCP Server started. Listening for data on Port: ${port}`)
+			})
 	} catch (error) {
-		self.log('error', 'Error occurred setting up Tally Listener: ' + error.toString())
+		self.log('error', `TSL TCP Server Error occurred: ${error}`)
 		self.setVariableValues({ module_state: 'Error - See Log.' })
 	}
 }
 
-function processTSL31Tally(tally) {
+function parseTSL31Packet(buffer) {
+	let self = this
+
+	if (buffer.length < 18) return null
+
+	const address = buffer.readUInt8(0)
+
+	const tallyByte = buffer.readUInt8(1)
+	const brightness = (tallyByte >> 6) & 0b11
+	const tally4 = (tallyByte >> 5) & 0b1
+	const tally3 = (tallyByte >> 4) & 0b1
+	const tally2 = (tallyByte >> 3) & 0b1
+	const tally1 = (tallyByte >> 2) & 0b1
+
+	let label = buffer.slice(2, 18).toString('ascii').replace(/\0/g, '').trim()
+
+	processTSLTallyObj({
+		address: address,
+		tally1: tally1,
+		tally2: tally2,
+		tally3: tally3,
+		tally4: tally4,
+		brightness: brightness,
+		label: label,
+	})
+}
+
+function processTSLTallyObj(tally) {
 	let self = this
 
 	let found = false
+
+	self.TALLIES = self.TALLIES || []
+	self.CHOICES_TALLYADDRESSES = self.CHOICES_TALLYADDRESSES || []
 
 	if (self.CHOICES_TALLYADDRESSES.length > 0 && self.CHOICES_TALLYADDRESSES[0].id == -1) {
 		//if the choices list is still set to default, go ahead and reset it
@@ -145,6 +174,15 @@ function processTSL31Tally(tally) {
 		tallyObj.tally2 = tally.tally2
 		tallyObj.label = tally.label.trim().replace(self.config.filter, '')
 
+		if (self.config.protocol == 'tsl5.0') {
+			tallyObj.rh_tally = tally.rh_tally
+			tallyObj.text_tally = tally.text_tally
+			tallyObj.lh_tally = tally.lh_tally
+			tallyObj.brightness = tally.brightness
+			tallyObj.reserved = tally.reserved
+			tallyObj.control_data = tally.control_data
+		}
+
 		self.TALLIES.push(tallyObj)
 		self.TALLIES.sort((a, b) => a.address - b.address)
 
@@ -166,119 +204,62 @@ function processTSL31Tally(tally) {
 	self.checkFeedbacks()
 }
 
-function SetUpTSL5Server_UDP(self, port) {
-	try {
-		self.log('info', `Creating TSL 5.0 UDP Connection on Port: ${port}`)
-		self.SERVER = dgram.createSocket('udp4')
-		self.SERVER.bind(port)
+function parseTSL5Packet(data) {
+	if (data.length < 12) return
 
-		self.SERVER.on('message', function (message, rinfo) {
-			processTSL5Tally(message)
-		})
-	} catch (error) {
-		self.log('error', `TSL 5.0 UDP Server Error occurred: ${error}`)
-		self.setVariableValues({ module_state: 'Error - See Log.' })
+	const PBC = data.readUInt16LE(0)
+	const VAR = data.readUInt8(2)
+	const FLAGS = data.readUInt8(3)
+	const SCREEN = data.readUInt16LE(4)
+	const INDEX = data.readUInt16LE(6)
+	const CONTROL = data.readUInt16LE(8)
+	const LENGTH = data.readUInt16LE(10)
+
+	if (data.length < 12 + LENGTH) return
+
+	const TEXT = data
+		.slice(12, 12 + LENGTH)
+		.toString('ascii')
+		.replace(/\0/g, '')
+		.trim()
+
+	const control = {
+		rh_tally: (CONTROL >> 0) & 0b11,
+		text_tally: (CONTROL >> 2) & 0b11,
+		lh_tally: (CONTROL >> 4) & 0b11,
+		brightness: (CONTROL >> 6) & 0b11,
+		reserved: (CONTROL >> 8) & 0b1111111,
+		control_data: (CONTROL >> 15) & 0b1,
 	}
-}
 
-function SetUpTSL5Server_TCP(self, port) {
-	try {
-		self.log('info', `Creating TSL 5.0 TCP Connection on Port: ${port}`)
-		self.SERVER = net
-			.createServer(function (socket) {
-				socket.on('data', function (data) {
-					processTSL5Tally(data)
-				})
+	let inPreview = 0
+	let inProgram = 0
 
-				socket.on('close', function () {
-					self.log('debug', `TSL 5.0 TCP Server connection closed.`)
-				})
-			})
-			.listen(port, function () {
-				self.log('info', `TSL 5.0 TCP Server started. Listening for data on Port: ${port}`)
-			})
-	} catch (error) {
-		self.log('error', `TSL 5.0 TCP Server Error occurred: ${error}`)
-		self.setVariableValues({ module_state: 'Error - See Log.' })
+	switch (control.text_tally) {
+		case 1:
+			inProgram = 1
+			break
+		case 2:
+			inPreview = 1
+			break
+		case 3:
+			inProgram = 1
+			inPreview = 1
+			break
 	}
-}
 
-function processTSL5Tally(data) {
-	if (data.length > 12) {
-		tallyobj = {}
-
-		var cursor = 0
-
-		//Message Format
-		const _PBC = 2 //bytes
-		const _VAR = 1
-		const _FLAGS = 1
-		const _SCREEN = 2
-		const _INDEX = 2
-		const _CONTROL = 2
-
-		//Display Data
-		const _LENGTH = 2
-
-		tallyobj.PBC = jspack.Unpack('<H', data, cursor)
-		cursor += _PBC
-
-		tallyobj.VAR = jspack.Unpack('<B', data, cursor)
-		cursor += _VAR
-
-		tallyobj.FLAGS = jspack.Unpack('<B', data, cursor)
-		cursor += _FLAGS
-
-		tallyobj.SCREEN = jspack.Unpack('<H', data, cursor)
-		cursor += _SCREEN
-
-		tallyobj.INDEX = jspack.Unpack('<H', data, cursor)
-		cursor += _INDEX
-
-		tallyobj.CONTROL = jspack.Unpack('<H', data, cursor)
-		cursor += _CONTROL
-
-		tallyobj.control = {}
-		tallyobj.control.rh_tally = (tallyobj.CONTROL >> 0) & 0b11
-		tallyobj.control.text_tally = (tallyobj.CONTROL >> 2) & 0b11
-		tallyobj.control.lh_tally = (tallyobj.CONTROL >> 4) & 0b11
-		tallyobj.control.brightness = (tallyobj.CONTROL >> 6) & 0b11
-		tallyobj.control.reserved = (tallyobj.CONTROL >> 8) & 0b1111111
-		tallyobj.control.control_data = (tallyobj.CONTROL >> 15) & 0b1
-
-		var LENGTH = jspack.Unpack('<H', data, cursor)
-		cursor += _LENGTH
-
-		tallyobj.TEXT = jspack.Unpack('s'.repeat(LENGTH), data, cursor)
-
-		let inPreview = 0
-		let inProgram = 0
-
-		switch (tallyobj.control.text_tally) {
-			case 0:
-				inPreview = 0
-				inProgram = 0
-				break
-			case 1:
-				inPreview = 0
-				inProgram = 1
-				break
-			case 2:
-				inPreview = 1
-				inProgram = 0
-				break
-			case 3:
-				inPreview = 1
-				inProgram = 1
-				break
-		}
-
-		let newTallyObj = {}
-		newTallyObj.tally1 = inPreview
-		newTallyObj.tally2 = inProgram
-		newTallyObj.address = tallyobj.INDEX[0]
-		newTallyObj.label = tallyobj.TEXT.join('').trim()
-
-		processTSL31Tally(newTallyObj) // Reuse the TSL 3.1 processing function to handle the TSL 5.0 data
+	const newTallyObj = {
+		tally1: inPreview,
+		tally2: inProgram,
+		address: INDEX,
+		label: TEXT,
+		rh_tally: control.rh_tally,
+		text_tally: control.text_tally,
+		lh_tally: control.lh_tally,
+		brightness: control.brightness,
+		reserved: control.reserved,
+		control_data: control.control_data,
 	}
+
+	processTSLTallyObj.call(this, newTallyObj)
 }

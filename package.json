@@ -1,6 +1,6 @@
 {
 	"name": "tslproducts-umdlistener",
-	"version": "2.0.3",
+	"version": "3.0.0",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
@@ -8,10 +8,7 @@
 	},
 	"license": "MIT",
 	"dependencies": {
-		"@companion-module/base": "^1.12.1",
-		"packet": "0.0.6",
-		"tsl-umd": "^1.1.2",
-		"tsl-umd-v5": "^1.0.6"
+		"@companion-module/base": "^1.12.1"
 	},
 	"repository": {
 		"type": "git",
