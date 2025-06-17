@@ -1,15 +1,15 @@
 // Sony-Bravia
 
-const { InstanceBase, InstanceStatus, runEntrypoint } = require('@companion-module/base');
-const UpgradeScripts = require('./src/upgrades');
+const { InstanceBase, InstanceStatus, runEntrypoint } = require('@companion-module/base')
+const UpgradeScripts = require('./src/upgrades')
 
-const config = require('./src/config');
-const actions = require('./src/actions');
-const feedbacks = require('./src/feedbacks');
-const variables = require('./src/variables');
-const presets = require('./src/presets');
+const config = require('./src/config')
+const actions = require('./src/actions')
+const feedbacks = require('./src/feedbacks')
+const variables = require('./src/variables')
+const presets = require('./src/presets')
 
-const api = require('./src/api');
+const api = require('./src/api')
 
 class TSLProductsUMDListenerInstance extends InstanceBase {
 	constructor(internal) {
@@ -22,22 +22,20 @@ class TSLProductsUMDListenerInstance extends InstanceBase {
 			...feedbacks,
 			...variables,
 			...presets,
-			...api
+			...api,
 		})
 
-		this.oldPortType = '';
+		this.oldPortType = ''
 
-		this.SERVER = undefined;
-		this.TALLIES = [];
-		this.CHOICES_TALLYADDRESSES = [
-			{ id: -1, label: 'No tally data received yet...'}
-		]
+		this.SERVER = undefined
+		this.TALLIES = []
+		this.CHOICES_TALLYADDRESSES = [{ id: -1, label: 'No tally data received yet...' }]
 	}
 
 	async destroy() {
-		let self = this;
+		let self = this
 
-		self.closePort();
+		self.closePort()
 	}
 
 	async init(config) {
@@ -48,35 +46,35 @@ class TSLProductsUMDListenerInstance extends InstanceBase {
 		this.config = config
 
 		if (config) {
-			this.oldPortType = this.config.porttype;
+			this.oldPortType = this.config.porttype
 			this.config = config
 		}
 
 		if (this.SERVER !== undefined) {
 			//close out any open ports and re-init
-			this.closePort();
+			this.closePort()
 		}
 
 		// Quickly check if certain config values are present and continue setup
 		if (this.config.port) {
 			//Open the listening port
-			this.openPort();
+			this.openPort()
 
 			// Init the Actions
-			this.initActions();
-			this.initVariables();
-			this.initFeedbacks();
-			this.initPresets();
+			this.initActions()
+			this.initVariables()
+			this.initFeedbacks()
+			this.initPresets()
 
-			this.checkVariables();
-			this.checkFeedbacks();
+			this.checkVariables()
+			this.checkFeedbacks()
 
 			// Set Status to Connecting
 			this.updateStatus(InstanceStatus.Connecting)
 
-			this.setVariableValues({'module_state': 'Waiting for Data...'});
+			this.setVariableValues({ module_state: 'Waiting for Data...' })
 		}
 	}
 }
 
-runEntrypoint(TSLProductsUMDListenerInstance, UpgradeScripts);
+runEntrypoint(TSLProductsUMDListenerInstance, UpgradeScripts)

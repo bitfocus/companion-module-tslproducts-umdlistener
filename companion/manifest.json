@@ -21,11 +21,6 @@
 		"entrypoint": "../index.js"
 	},
 	"manufacturer": "TSL Products",
-	"products": [
-		"UMD Listener"
-	],
-	"keywords": [
-		"UMD",
-		"Tally"
-	]
+	"products": ["UMD Listener"],
+	"keywords": ["UMD", "Tally"]
 }
