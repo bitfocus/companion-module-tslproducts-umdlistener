@@ -194,21 +194,21 @@ function parseTSL5Packet(self, data) {
 	console.log('Raw TSL5 Packet:', data.toString('hex'))
 
 	// Handle DLE/STX framing if present
-if (data[0] === 0xfe && data[1] === 0x02) {
-	data = data.slice(2)
+	if (data[0] === 0xfe && data[1] === 0x02) {
+		data = data.slice(2)
 
-	// Un-stuff DLE bytes (0xfe 0xfe → 0xfe)
-	let clean = []
-	for (let i = 0; i < data.length; i++) {
-		if (data[i] === 0xfe && data[i + 1] === 0xfe) {
-			clean.push(0xfe)
-			i++ // skip next byte
-		} else {
-			clean.push(data[i])
+		// Un-stuff DLE bytes (0xfe 0xfe → 0xfe)
+		let clean = []
+		for (let i = 0; i < data.length; i++) {
+			if (data[i] === 0xfe && data[i + 1] === 0xfe) {
+				clean.push(0xfe)
+				i++ // skip next byte
+			} else {
+				clean.push(data[i])
+			}
 		}
+		data = Buffer.from(clean)
 	}
-	data = Buffer.from(clean)
-}
 
 	if (data.length < 12) {
 		self.log('warn', 'Received TSL 5.0 packet is too short.')
@@ -278,7 +278,6 @@ if (data[0] === 0xfe && data[1] === 0x02) {
 }
 
 function processTSLTallyObj(self, tally) {
-
 	let found = false
 
 	self.TALLIES = self.TALLIES || []
@@ -312,6 +311,8 @@ function processTSLTallyObj(self, tally) {
 		tallyObj.address = tally.address
 		tallyObj.tally1 = tally.tally1
 		tallyObj.tally2 = tally.tally2
+		tallyObj.tally3 = tally.tally3
+		tallyObj.tally4 = tally.tally4
 		tallyObj.label = tally.label.trim().replace(self.config.filter, '')
 
 		if (self.config.protocol == 'tsl5.0') {
@@ -343,5 +344,3 @@ function processTSLTallyObj(self, tally) {
 	self.checkVariables()
 	self.checkFeedbacks()
 }
-
-

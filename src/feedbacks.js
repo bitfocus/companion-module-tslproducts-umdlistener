@@ -12,7 +12,7 @@ module.exports = {
 			type: 'boolean',
 			name: 'Show Tally State On Button',
 			description: 'Indicate if Selected Address Tally is in X State',
-			style: {
+			defaultStyle: {
 				color: foregroundColorWhite,
 				bgcolor: backgroundColorRed,
 			},
@@ -32,6 +32,11 @@ module.exports = {
 					choices: [
 						{ id: 'tally1', label: 'PVW' },
 						{ id: 'tally2', label: 'PGM' },
+						//also add tally1-4 generically
+						{ id: 'tally1', label: 'Tally 1' },
+						{ id: 'tally2', label: 'Tally 2' },
+						{ id: 'tally3', label: 'Tally 3' },
+						{ id: 'tally4', label: 'Tally 4' },
 					],
 				},
 				{
@@ -48,10 +53,10 @@ module.exports = {
 			callback: function (feedback) {
 				let opt = feedback.options
 
-				let tallyObj = self.TALLIES.find((tally) => tally.address == opt.address)
+				let tallyObj = self.TALLIES.find((tally) => parseInt(tally.address) == parseInt(opt.address))
 
 				if (tallyObj) {
-					if (tallyObj[opt.number] == opt.state) {
+					if (parseInt(tallyObj[opt.number]) == opt.state) {
 						return true
 					}
 				}

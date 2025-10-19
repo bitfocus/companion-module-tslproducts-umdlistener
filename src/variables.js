@@ -18,6 +18,24 @@ module.exports = {
 				variableId: `tally_${self.TALLIES[i].address}_pgm`,
 			})
 
+			//also just add tally1-4
+			variables.push({
+				name: `Tally ${self.TALLIES[i].address} Tally 1`,
+				variableId: `tally_${self.TALLIES[i].address}_tally1`,
+			})
+			variables.push({
+				name: `Tally ${self.TALLIES[i].address} Tally 2`,
+				variableId: `tally_${self.TALLIES[i].address}_tally2`,
+			})
+			variables.push({
+				name: `Tally ${self.TALLIES[i].address} Tally 3`,
+				variableId: `tally_${self.TALLIES[i].address}_tally3`,
+			})
+			variables.push({
+				name: `Tally ${self.TALLIES[i].address} Tally 4`,
+				variableId: `tally_${self.TALLIES[i].address}_tally4`,
+			})
+
 			if (self.config.protocol == 'tsl5.0') {
 				variables.push({
 					name: `Tally ${self.TALLIES[i].address} RH Tally`,
@@ -57,8 +75,17 @@ module.exports = {
 
 			for (let i = 0; i < self.TALLIES.length; i++) {
 				variableObj[`tally_${self.TALLIES[i].address}_label`] = self.TALLIES[i].label
-				variableObj[`tally_${self.TALLIES[i].address}_pvw`] = self.TALLIES[i].tally1 == 1 ? 'True' : 'False'
-				variableObj[`tally_${self.TALLIES[i].address}_pgm`] = self.TALLIES[i].tally2 == 1 ? 'True' : 'False'
+				variableObj[`tally_${self.TALLIES[i].address}_pvw`] = parseInt(self.TALLIES[i].tally1) == 1 ? 'True' : 'False'
+				variableObj[`tally_${self.TALLIES[i].address}_pgm`] = parseInt(self.TALLIES[i].tally2) == 1 ? 'True' : 'False'
+
+				variableObj[`tally_${self.TALLIES[i].address}_tally1`] =
+					parseInt(self.TALLIES[i].tally1) == 1 ? 'True' : 'False'
+				variableObj[`tally_${self.TALLIES[i].address}_tally2`] =
+					parseInt(self.TALLIES[i].tally2) == 1 ? 'True' : 'False'
+				variableObj[`tally_${self.TALLIES[i].address}_tally3`] =
+					parseInt(self.TALLIES[i].tally3) == 1 ? 'True' : 'False'
+				variableObj[`tally_${self.TALLIES[i].address}_tally4`] =
+					parseInt(self.TALLIES[i].tally4) == 1 ? 'True' : 'False'
 
 				if (self.config.protocol == 'tsl5.0') {
 					variableObj[`tally_${self.TALLIES[i].address}_rh_tally`] = self.TALLIES[i].rh_tally
