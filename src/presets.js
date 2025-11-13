@@ -4,6 +4,10 @@ module.exports = {
 	initPresets() {
 		let self = this
 
+		const foregroundColor = combineRgb(255, 255, 255) // White
+		const backgroundColorGreen = combineRgb(0, 255, 0) // Green
+		const backgroundColorRed = combineRgb(255, 0, 0) // Red
+
 		const presets = []
 
 		for (let i = 0; i < self.TALLIES.length; i++) {
