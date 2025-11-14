@@ -163,31 +163,37 @@ function startTCP(self) {
 }
 
 function parseTSL31Packet(self, buffer) {
-	console.log('parsing tsl3')
-	console.log(buffer)
+	if (buffer.length < 18) return
 
-	if (buffer.length < 18) return null
-
+	// Byte 0: 0x80 + address
 	const address = buffer.readUInt8(0) - 0x80
 
-	const tallyByte = buffer.readUInt8(1)
-	const brightness = (tallyByte >> 6) & 0b11
-	const tally4 = (tallyByte >> 5) & 0b1
-	const tally3 = (tallyByte >> 4) & 0b1
-	const tally2 = (tallyByte >> 3) & 0b1
-	const tally1 = (tallyByte >> 2) & 0b1
+	// Byte 1: brightness + tally bits
+	const byte1 = buffer.readUInt8(1)
 
-	let label = buffer.slice(2, 18).toString('ascii').replace(/\0/g, '').trim()
+	const brightness = (byte1 >> 6) & 0b11 // Bits 7-6
 
-	processTSLTallyObj(self, {
-		address: address,
-		tally1: tally1,
-		tally2: tally2,
-		tally3: tally3,
-		tally4: tally4,
-		brightness: brightness,
-		label: label,
-	})
+	const tally1 = (byte1 >> 0) & 0b1
+	const tally2 = (byte1 >> 1) & 0b1
+	const tally3 = (byte1 >> 2) & 0b1
+	const tally4 = (byte1 >> 3) & 0b1
+
+	// Bytes 2–17: label (16 bytes ASCII, padded with nulls)
+	const label = buffer.slice(2, 18).toString('ascii').replace(/\0/g, '').trim()
+
+	const tallyObj = {
+		address,
+		tally1,
+		tally2,
+		tally3,
+		tally4,
+		brightness,
+		label,
+	}
+
+	console.log('Parsed TSL 3.1 packet:', tallyObj)
+
+	processTSLTallyObj(self, tallyObj)
 }
 
 function parseTSL5Packet(self, data) {
@@ -279,6 +285,8 @@ function parseTSL5Packet(self, data) {
 
 function processTSLTallyObj(self, tally) {
 	let found = false
+
+	//console.log('processing TSL packet:', tally)
 
 	self.TALLIES = self.TALLIES || []
 	self.CHOICES_TALLYADDRESSES = self.CHOICES_TALLYADDRESSES || []
