@@ -3,7 +3,7 @@
 	"version": "3.0.2",
 	"main": "index.js",
 	"scripts": {
-		"test": "node --test test/*.test.js",
+		"test": "echo \"Error: no test specified\" && exit 1",
 		"format": "prettier -w .",
 		"build": "companion-module-build"
 	},
