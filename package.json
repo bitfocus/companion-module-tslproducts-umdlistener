@@ -4,18 +4,22 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"format": "prettier -w ."
+		"format": "prettier -w .",
+		"build": "companion-module-build"
 	},
 	"license": "MIT",
 	"dependencies": {
-		"@companion-module/base": "^1.12.1"
+		"@companion-module/base": "~1.15.0"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-tslproducts-umdlistener.git"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^2.8.0",
+		"@companion-module/tools": "^2.9.0",
 		"prettier": "^3.5.3"
+	},
+	"engines": {
+		"node": "^26.5"
 	}
 }
